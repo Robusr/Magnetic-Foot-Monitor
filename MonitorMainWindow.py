@@ -1,5 +1,5 @@
-# Robusr 2026.4.19
 # 主窗口业务逻辑类
+# Robusr 2026.4.19
 
 # -*- coding: utf-8 -*-
 
@@ -20,6 +20,22 @@ class MonitorMainWindow(QMainWindow):
         super().__init__(parent)
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
+
+
+        # 断开QtCore.QMetaObject.connectSlotsByName(MainWindow)自动连接
+        try:
+            self.ui.pushButtonBegin.clicked.disconnect()
+        except:
+            pass
+
+        try:
+            self.ui.pushButtonFinish.clicked.disconnect()
+        except:
+            pass
+
+        # 单次连接重构
+        self.ui.pushButtonBegin.clicked.connect(self.on_pushButtonBegin_clicked)
+        self.ui.pushButtonFinish.clicked.connect(self.on_pushButtonFinish_clicked)
 
     def on_pushButtonBegin_clicked(self):
         print("Begin")
