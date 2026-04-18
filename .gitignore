@@ -1,0 +1,11 @@
+# PyCharm cache/options directory
+.idea/
+
+**/__pycache__/
+**/venv/
+*.pyc
+
+# Visual Studio cache/options directory
+.vs/
+
+.env
