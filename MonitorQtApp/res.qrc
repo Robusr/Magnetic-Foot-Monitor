@@ -1,5 +1,7 @@
 <RCC>
     <qresource prefix="/icons">
         <file>images/hammer.ico</file>
+        <file>images/HRT_Logo.png</file>
+        <file>images/title.png</file>
     </qresource>
 </RCC>
