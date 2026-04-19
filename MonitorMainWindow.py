@@ -157,7 +157,25 @@ class MonitorMainWindow(QMainWindow):
 
     def on_pushButton_Begin_clicked(self):
         """磁足整体启动"""
-        print("Foot D Finish")
+        print("Foot Global Begin")
+        pass
+
+    def on_pushButton_Finish_clicked(self):
+        """磁足整体启动"""
+        print("Foot Global Finish")
+        pass
+
+    def on_pushButton_Send_clicked(self):
+        """磁足整体启动"""
+        print("Send Message")
+        pass
+
+    def on_pushButton_Refresh_clicked(self):
+        print("Refresh Message")
+        pass
+
+    def on_pushButton_Reset_clicked(self):
+        print("Reset Message")
         pass
 
 
