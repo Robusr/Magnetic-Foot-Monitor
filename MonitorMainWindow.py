@@ -129,45 +129,45 @@ class MonitorMainWindow(QMainWindow):
         print("Disconnect")
         pass
 
-    def on_pushButton_A_Begin_clicked(self):
-        """磁足A启动"""
-        print("Foot A Begin")
-        pass
-
-    def on_pushButton_A_Finish_clicked(self):
-        """磁足A关闭"""
-        print("Foot A Finish")
-        pass
-
-    def on_pushButton_B_Begin_clicked(self):
-        """磁足B启动"""
-        print("Foot B Begin")
-        pass
-
-    def on_pushButton_B_Finish_clicked(self):
-        """磁足B关闭"""
-        print("Foot B Finish")
-        pass
-
-    def on_pushButton_C_Begin_clicked(self):
-        """磁足C启动"""
-        print("Foot C Begin")
-        pass
-
-    def on_pushButton_C_Finish_clicked(self):
-        """磁足C关闭"""
-        print("Foot C Finish")
-        pass
-
-    def on_pushButton_D_Begin_clicked(self):
-        """磁足D启动"""
-        print("Foot D Begin")
-        pass
-
-    def on_pushButton_D_Finish_clicked(self):
-        """磁足D关闭"""
-        print("Foot D Finish")
-        pass
+    # def on_pushButton_A_Begin_clicked(self):
+    #     """磁足A启动"""
+    #     print("Foot A Begin")
+    #     pass
+    #
+    # def on_pushButton_A_Finish_clicked(self):
+    #     """磁足A关闭"""
+    #     print("Foot A Finish")
+    #     pass
+    #
+    # def on_pushButton_B_Begin_clicked(self):
+    #     """磁足B启动"""
+    #     print("Foot B Begin")
+    #     pass
+    #
+    # def on_pushButton_B_Finish_clicked(self):
+    #     """磁足B关闭"""
+    #     print("Foot B Finish")
+    #     pass
+    #
+    # def on_pushButton_C_Begin_clicked(self):
+    #     """磁足C启动"""
+    #     print("Foot C Begin")
+    #     pass
+    #
+    # def on_pushButton_C_Finish_clicked(self):
+    #     """磁足C关闭"""
+    #     print("Foot C Finish")
+    #     pass
+    #
+    # def on_pushButton_D_Begin_clicked(self):
+    #     """磁足D启动"""
+    #     print("Foot D Begin")
+    #     pass
+    #
+    # def on_pushButton_D_Finish_clicked(self):
+    #     """磁足D关闭"""
+    #     print("Foot D Finish")
+    #     pass
 
     def on_pushButton_Begin_clicked(self):
         """磁足整体启动"""
