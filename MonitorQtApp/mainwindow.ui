@@ -406,7 +406,7 @@
      <string>Disconnect</string>
     </property>
    </widget>
-   <widget class="QComboBox" name="comboBox">
+   <widget class="QComboBox" name="comboBox_ID">
     <property name="geometry">
      <rect>
       <x>120</x>
@@ -416,7 +416,7 @@
      </rect>
     </property>
    </widget>
-   <widget class="QComboBox" name="comboBox_2">
+   <widget class="QComboBox" name="comboBox_FN">
     <property name="geometry">
      <rect>
       <x>120</x>
@@ -426,7 +426,7 @@
      </rect>
     </property>
    </widget>
-   <widget class="QComboBox" name="comboBox_3">
+   <widget class="QComboBox" name="comboBox_MODE">
     <property name="geometry">
      <rect>
       <x>120</x>
@@ -436,7 +436,7 @@
      </rect>
     </property>
    </widget>
-   <widget class="QLabel" name="label_Operation_2">
+   <widget class="QLabel" name="label_ID">
     <property name="geometry">
      <rect>
       <x>20</x>
@@ -457,7 +457,7 @@
      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p align=&quot;center&quot;&gt;ID&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
     </property>
    </widget>
-   <widget class="QLabel" name="label_Operation_3">
+   <widget class="QLabel" name="label_FN">
     <property name="geometry">
      <rect>
       <x>20</x>
@@ -478,7 +478,7 @@
      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p align=&quot;center&quot;&gt;FN&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
     </property>
    </widget>
-   <widget class="QLabel" name="label_Operation_4">
+   <widget class="QLabel" name="label_MODE">
     <property name="geometry">
      <rect>
       <x>20</x>
@@ -499,7 +499,7 @@
      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p align=&quot;center&quot;&gt;MODE&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
     </property>
    </widget>
-   <widget class="QLabel" name="label_Operation_5">
+   <widget class="QLabel" name="label_CURRENT">
     <property name="geometry">
      <rect>
       <x>20</x>
@@ -520,7 +520,7 @@
      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p align=&quot;center&quot;&gt;CURRENT&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
     </property>
    </widget>
-   <widget class="QLabel" name="label_Operation_6">
+   <widget class="QLabel" name="label_DURATION">
     <property name="geometry">
      <rect>
       <x>20</x>
@@ -541,7 +541,7 @@
      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p align=&quot;center&quot;&gt;DURATION&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
     </property>
    </widget>
-   <widget class="QPlainTextEdit" name="plainTextEdit_Debug_2">
+   <widget class="QPlainTextEdit" name="plainTextEdit_CURRENT">
     <property name="geometry">
      <rect>
       <x>120</x>
@@ -551,7 +551,7 @@
      </rect>
     </property>
    </widget>
-   <widget class="QPlainTextEdit" name="plainTextEdit_Debug_3">
+   <widget class="QPlainTextEdit" name="plainTextEdit_DURATION">
     <property name="geometry">
      <rect>
       <x>120</x>
@@ -561,7 +561,7 @@
      </rect>
     </property>
    </widget>
-   <widget class="QLabel" name="label_Operation_7">
+   <widget class="QLabel" name="label_A">
     <property name="geometry">
      <rect>
       <x>480</x>
@@ -582,7 +582,7 @@
      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p align=&quot;center&quot;&gt;A&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
     </property>
    </widget>
-   <widget class="QLabel" name="label_Operation_8">
+   <widget class="QLabel" name="label_ms">
     <property name="geometry">
      <rect>
       <x>480</x>
