@@ -1,7 +1,14 @@
-# 主窗口业务逻辑类
-# Robusr 2026.4.19
-# 2026.5.6 优化：保留原始断开重连机制，新增Debug Hex发送、Begin控制、串口解析、图表更新
 # -*- coding: utf-8 -*-
+"""
+@File    : MonitorMainWindow.py
+@Author  : Robusr
+@Date    : 2026/4/19 00:28
+@Description: 主窗口业务逻辑类
+@Software: PyCharm
+"""
+
+# 2026.5.6 优化：保留原始断开重连机制，新增Debug Hex发送、Begin控制、串口解析、图表更新
+
 import sys
 import time
 import datetime
