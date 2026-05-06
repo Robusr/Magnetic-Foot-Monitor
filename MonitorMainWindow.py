@@ -63,6 +63,23 @@ class MonitorMainWindow(QMainWindow):
 
         self.timer1 = QTimer()
 
+        self.figure_state = plt.figure()  # 新建绘图区域Gx
+        self.canvas_state = FigureCanvasQTAgg(self.figure_state)  # 绘图区域放到图层canvas之中
+        self.ui.gridLayout_State.addWidget(self.canvas_state, 0, 2, 2, 1)  # 图层放到pyqt布局之中（这个布局替代了之前设计时使用的graphicView）
+        self.figure_state_draw = self.canvas_state.figure.subplots(1, 1)
+        x = np.arange(1, 1000)
+        y = x ** 2
+        plt.plot(x, y)
+
+        self.figure_current = plt.figure()  # 新建绘图区域Gx
+        self.canvas_current = FigureCanvasQTAgg(self.figure_current)  # 绘图区域放到图层canvas之中
+        self.ui.gridLayout_Current.addWidget(self.canvas_current, 0, 2, 2,
+                                             1)  # 图层放到pyqt布局之中（这个布局替代了之前设计时使用的graphicView）
+        self.figure_current_draw = self.canvas_current.figure.subplots(1, 1)
+        x = np.arange(1, 1000)
+        y = x ** 2
+        plt.plot(x, y)
+
         # 断开QtCore.QMetaObject.connectSlotsByName(MainWindow)自动连接
         try:
             self.ui.pushButton_Connect.clicked.disconnect()
@@ -161,6 +178,9 @@ class MonitorMainWindow(QMainWindow):
         # 检测所有存在的串口，将信息存储在字典中
         self.Com_Dict = {}  # 创建一个字典，字典是可变的容器
         port_list = list(serial.tools.list_ports.comports())  # list是序列，一串数据，可以追加数据
+
+        print(f"[Debug] 检测到的串口数量: {len(port_list)}")
+
         self.ui.comboBox_DataPort.clear()  # s1__box_2为串口选择列表
         for port in port_list:
             self.Com_Dict["%s" % port[0]] = "%s" % port[1]
