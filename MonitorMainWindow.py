@@ -63,6 +63,7 @@ class MonitorMainWindow(QMainWindow):
 
         self.timer1 = QTimer()
 
+        # 数据回传测试填充
         self.figure_state = plt.figure()  # 新建绘图区域Gx
         self.canvas_state = FigureCanvasQTAgg(self.figure_state)  # 绘图区域放到图层canvas之中
         self.ui.gridLayout_State.addWidget(self.canvas_state, 0, 2, 2, 1)  # 图层放到pyqt布局之中（这个布局替代了之前设计时使用的graphicView）
