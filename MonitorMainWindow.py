@@ -1,12 +1,13 @@
 # 主窗口业务逻辑类
 # Robusr 2026.4.19
 # 2026.5.6 功能完善：串口协议对接、输入验证、模块状态管理、动态图表、日志系统
+# 2026.5.6 修复：CAN ID 字节序改为小端模式(little-endian)
 # -*- coding: utf-8 -*-
 import sys
 import time
 import datetime
 from PyQt5.QtWidgets import QApplication, QMainWindow, QMessageBox
-from PyQt5.QtGui import QIntValidator  # === 修复：QIntValidator 在这里 ===
+from PyQt5.QtGui import QIntValidator
 import serial
 import serial.tools.list_ports
 import re
@@ -34,9 +35,9 @@ class MonitorMainWindow(QMainWindow):
         self.ui.setupUi(self)
         self.setWindowTitle("Magnetic Foot Monitor")
 
-        # === 新增：全局变量初始化 ===
+        # === 全局变量初始化 ===
         self.ser = serial.Serial()
-        self.serial_buffer = b""  # 串口数据接收缓冲区（解决粘包问题）
+        self.serial_buffer = b""  # 串口数据接收缓冲区
         self.module_states = {}  # 磁吸附模块状态字典 {id: {状态参数}}
         self.plot_time = []  # 图表X轴（时间戳）
         self.plot_current = []  # 实际电流数据
@@ -45,12 +46,12 @@ class MonitorMainWindow(QMainWindow):
 
         # === 原有代码保留，修改初始化顺序 ===
         self.port_check()
-        self.init_ui_controls()  # === 新增：初始化UI控件 ===
+        self.init_ui_controls()  # === 初始化UI控件 ===
 
         self.timer = QTimer(self)
-        self.timer.timeout.connect(self.receive_data)  # === 修改：连接到数据接收函数 ===
+        self.timer.timeout.connect(self.receive_data)  # === 连接到数据接收函数 ===
 
-        # === 原有代码保留，修改matplotlib初始化 ===
+        # === matplotlib初始化 ===
         # 状态图表初始化
         self.figure_state = plt.figure()
         self.canvas_state = FigureCanvasQTAgg(self.figure_state)
@@ -73,7 +74,7 @@ class MonitorMainWindow(QMainWindow):
         self.line_current, = self.ax_current.plot([], [], 'r-', label="Actual Current")
         self.ax_current.legend()
 
-        # 断开自动连接（原有代码保留）
+        # 断开自动连接
         try:
             self.ui.pushButton_Connect.clicked.disconnect()
         except:
@@ -103,7 +104,7 @@ class MonitorMainWindow(QMainWindow):
         except:
             pass
 
-        # 重新连接信号（原有代码保留）
+        # 重新连接信号
         self.ui.pushButton_Connect.clicked.connect(self.on_pushButton_Connect_clicked)
         self.ui.pushButton_Disconnect.clicked.connect(self.on_pushButton_Disconnect_clicked)
         self.ui.pushButton_Begin.clicked.connect(self.on_pushButton_Begin_clicked)
@@ -114,7 +115,7 @@ class MonitorMainWindow(QMainWindow):
 
         self.log_message("系统初始化完成")
 
-    # === 新增：UI控件初始化函数 ===
+    # === UI控件初始化函数 ===
     def init_ui_controls(self):
         """初始化所有下拉框和输入验证器"""
         # ID下拉框（可扩展，默认1-8号节点）
@@ -132,18 +133,63 @@ class MonitorMainWindow(QMainWindow):
         self.ui.comboBox_MODE.addItem("充磁", 1)
         self.ui.comboBox_MODE.addItem("退磁", 2)
 
-        # 电流输入验证（0-20A整数）
-        current_validator = QIntValidator(0, 20, self)
-        self.ui.plainTextEdit_CURRENT.setValidator(current_validator)
-
-        # 时间输入验证（0-30ms整数）
-        duration_validator = QIntValidator(0, 30, self)
-        self.ui.plainTextEdit_DURATION.setValidator(duration_validator)
+        # === 移除 setValidator，改用信号槽实时过滤 ===
+        self.ui.plainTextEdit_CURRENT.textChanged.connect(self.filter_current_input)
+        self.ui.plainTextEdit_DURATION.textChanged.connect(self.filter_duration_input)
 
         # 默认波特率选中9600
         self.ui.comboBox_BaudRate.setCurrentText("9600")
 
-    # === 新增：统一日志输出函数（带时间戳） ===
+    # === 实时过滤电流输入（只允许数字） ===
+    def filter_current_input(self):
+        """实时过滤电流输入框，只保留数字，并限制范围"""
+        text = self.ui.plainTextEdit_CURRENT.toPlainText()
+        # 只保留数字
+        filtered_text = ''.join([c for c in text if c.isdigit()])
+
+        # 如果有变化，更新文本（防止递归，先阻塞信号）
+        if filtered_text != text:
+            self.ui.plainTextEdit_CURRENT.blockSignals(True)
+            self.ui.plainTextEdit_CURRENT.setPlainText(filtered_text)
+            # 移动光标到末尾
+            cursor = self.ui.plainTextEdit_CURRENT.textCursor()
+            cursor.movePosition(cursor.End)
+            self.ui.plainTextEdit_CURRENT.setTextCursor(cursor)
+            self.ui.plainTextEdit_CURRENT.blockSignals(False)
+
+        # 限制最大值为20
+        if filtered_text:
+            val = int(filtered_text)
+            if val > 20:
+                self.ui.plainTextEdit_CURRENT.blockSignals(True)
+                self.ui.plainTextEdit_CURRENT.setPlainText("20")
+                self.ui.plainTextEdit_CURRENT.blockSignals(False)
+
+    # === 实时过滤时间输入（只允许数字） ===
+    def filter_duration_input(self):
+        """实时过滤时间输入框，只保留数字，并限制范围"""
+        text = self.ui.plainTextEdit_DURATION.toPlainText()
+        # 只保留数字
+        filtered_text = ''.join([c for c in text if c.isdigit()])
+
+        # 如果有变化，更新文本
+        if filtered_text != text:
+            self.ui.plainTextEdit_DURATION.blockSignals(True)
+            self.ui.plainTextEdit_DURATION.setPlainText(filtered_text)
+            cursor = self.ui.plainTextEdit_DURATION.textCursor()
+            cursor.movePosition(cursor.End)
+            self.ui.plainTextEdit_DURATION.setTextCursor(cursor)
+            self.ui.plainTextEdit_DURATION.blockSignals(False)
+
+        # 限制最大值为30
+        if filtered_text:
+            val = int(filtered_text)
+            if val > 30:
+                self.ui.plainTextEdit_DURATION.blockSignals(True)
+                self.ui.plainTextEdit_DURATION.setPlainText("30")
+                self.ui.plainTextEdit_DURATION.blockSignals(False)
+
+    # === 统一日志输出函数（带时间戳） ===
     def log_message(self, message):
         """输出带时间戳的日志信息"""
         timestamp = datetime.datetime.now().strftime("%H:%M:%S.%f")[:-3]
@@ -153,7 +199,7 @@ class MonitorMainWindow(QMainWindow):
             self.ui.plainTextEdit_Log.verticalScrollBar().maximum()
         )
 
-    # === 新增：输入验证函数 ===
+    # === 输入验证函数 ===
     def validate_input(self):
         """验证所有输入参数是否合法"""
         # 检查ID是否选择
@@ -172,7 +218,7 @@ class MonitorMainWindow(QMainWindow):
             return False
 
         # 检查电流输入
-        current_text = self.ui.plainTextEdit_CURRENT.text().strip()
+        current_text = self.ui.plainTextEdit_CURRENT.toPlainText().strip()
         if not current_text:
             QMessageBox.warning(self, "输入错误", "请输入电流值")
             return False
@@ -182,7 +228,7 @@ class MonitorMainWindow(QMainWindow):
             return False
 
         # 检查时间输入
-        duration_text = self.ui.plainTextEdit_DURATION.text().strip()
+        duration_text = self.ui.plainTextEdit_DURATION.toPlainText().strip()
         if not duration_text:
             QMessageBox.warning(self, "输入错误", "请输入脉冲时间")
             return False
@@ -193,7 +239,7 @@ class MonitorMainWindow(QMainWindow):
 
         return True
 
-    # === 新增：核心命令发送函数 ===
+    # === 核心命令发送函数 ===
     def mag_operate(self, module_id, foot_num, mode, current, pulse_ms):
         """
         发送磁吸附模块控制命令
@@ -217,7 +263,10 @@ class MonitorMainWindow(QMainWindow):
         packet.append(0x00)  # 保留
         packet.append(0x00)  # 保留
         packet.append(0x04)  # 有效数据长度（4字节）
-        packet.extend([0x00, 0x00, 0x00, module_id])  # 4字节CAN ID
+
+        # === CAN ID 改为小端模式(little-endian) ===
+        packet.extend(module_id.to_bytes(4, byteorder='little'))  # 4字节CAN ID
+
         packet.append(mode)  # 模式
         packet.append(foot_num)  # 足编号
         packet.append(current)  # 电流值
@@ -229,6 +278,7 @@ class MonitorMainWindow(QMainWindow):
             self.ser.write(packet)
             self.log_message(
                 f"发送命令: ID={module_id:02X}, 足={foot_num}, 模式={mode}, 电流={current}A, 时间={pulse_ms}ms")
+            print(f"[Debug] 发送原始帧: {packet.hex()}")  # 新增调试打印
             # 保存发送的参数到模块状态
             self.module_states[module_id] = {
                 "send_mode": mode,
@@ -283,8 +333,10 @@ class MonitorMainWindow(QMainWindow):
                 self.log_message(f"无效帧（包尾错误）: {frame.hex()}")
                 continue
 
-            # 解析CAN数据
-            can_id = int.from_bytes(frame[4:8], byteorder='big')
+            print(f"[Debug] 收到原始帧: {frame.hex()}")  # 新增调试打印
+
+            # === 修复：CAN ID 改为小端模式(little-endian) ===
+            can_id = int.from_bytes(frame[4:8], byteorder='little')
             data_len = frame[3]
             can_data = frame[8:8 + data_len]
 
@@ -295,7 +347,7 @@ class MonitorMainWindow(QMainWindow):
             else:
                 self.log_message(f"收到未知CAN帧: ID={can_id:04X}, Data={can_data.hex()}")
 
-    # === 新增：回执帧解析函数 ===
+    # === 回执帧解析函数 ===
     def parse_ack_frame(self, module_id, data):
         """解析磁吸附模块回执帧"""
         if len(data) < 5:
@@ -355,7 +407,7 @@ class MonitorMainWindow(QMainWindow):
         self.ax_current.autoscale_view()
         self.canvas_current.draw()
 
-    # === 原有按钮点击函数，修改实现 ===
+    # === 按钮点击函数 ===
     def on_pushButton_Connect_clicked(self):
         """连接串口"""
         self.port_open()
@@ -381,8 +433,8 @@ class MonitorMainWindow(QMainWindow):
         module_id = self.ui.comboBox_ID.currentData()
         foot_num = self.ui.comboBox_FN.currentData()
         mode = self.ui.comboBox_MODE.currentData()
-        current = int(self.ui.plainTextEdit_CURRENT.text().strip())
-        pulse_ms = int(self.ui.plainTextEdit_DURATION.text().strip())
+        current = int(self.ui.plainTextEdit_CURRENT.toPlainText().strip())
+        pulse_ms = int(self.ui.plainTextEdit_DURATION.toPlainText().strip())
 
         # 发送命令
         self.mag_operate(module_id, foot_num, mode, current, pulse_ms)
@@ -474,7 +526,7 @@ class MonitorMainWindow(QMainWindow):
         self.ui.pushButton_Disconnect.setEnabled(True)
         self.log_message(f"串口 {port_name} 已打开，波特率 {baud_rate}")
 
-    # === 原有关闭串口函数，完善状态重置 ===
+    # === 关闭串口函数，完善状态重置 ===
     def port_close(self):
         """关闭串口"""
         self.timer.stop()
