@@ -1,3 +1,12 @@
+# -*- coding: utf-8 -*-
+"""
+@File    : Monitor.py
+@Author  : Robusr
+@Date    : 2026/5/9 15:33
+@Description: 封装入口文件
+@Software: PyCharm
+"""
+
 import sys
 from PyQt5.QtWidgets import QApplication
 from PyQt5.QtGui import QIcon
@@ -10,5 +19,3 @@ mainform = MonitorMainWindow()
 
 mainform.show()
 sys.exit(app.exec_())
-
-
