@@ -1,3 +1,12 @@
+# -*- coding: utf-8 -*-
+"""
+@File    : Monitor.py
+@Author  : Robusr
+@Date    : 2026/5/6 15:33
+@Description: 开发测试入口文件
+@Software: PyCharm
+"""
+
 import sys
 from PyQt5.QtWidgets import QApplication
 from PyQt5.QtGui import QIcon
