@@ -3,7 +3,7 @@
 @File    : Monitor.py
 @Author  : Robusr
 @Date    : 2026/5/6 15:33
-@Description: 开发测试入口文件
+@Description: oyinstaller封装入口文件
 @Software: PyCharm
 """
 
@@ -19,5 +19,3 @@ mainform = MonitorMainWindow()
 
 mainform.show()
 sys.exit(app.exec_())
-
-
