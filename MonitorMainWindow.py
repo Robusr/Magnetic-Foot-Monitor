@@ -47,13 +47,13 @@ class MonitorMainWindow(QMainWindow):
         self.timer.timeout.connect(self.receive_data)  # 连接数据接收函数
         self.timer1 = QTimer()
 
-        # ================= 原始代码：第一次临时连接（必须保留） =================
+
         self.ui.pushButton_Connect.clicked.connect(self.port_open)
         self.ui.pushButton_Disconnect.clicked.connect(self.port_close)
         self.ui.comboBox_DataPort.currentTextChanged.connect(self.port_imf)
-        # =====================================================================
 
-        # 图表初始化（替换原始的x²测试曲线）
+
+        # 图表初始化
         self.figure_state = plt.figure()
         self.canvas_state = FigureCanvasQTAgg(self.figure_state)
         self.ui.gridLayout_State.addWidget(self.canvas_state, 0, 2, 2, 1)
@@ -76,7 +76,6 @@ class MonitorMainWindow(QMainWindow):
         self.line_current, = self.ax_current.plot([], [], 'r-', label="Actual Current")
         self.ax_current.legend()
 
-        # ================= 原始代码：断开所有自动连接（必须完整保留） =================
         try:
             self.ui.pushButton_Connect.clicked.disconnect()
         except:
@@ -111,9 +110,7 @@ class MonitorMainWindow(QMainWindow):
             self.ui.pushButton_Reset.clicked.disconnect()
         except:
             pass
-        # =====================================================================
 
-        # ================= 原始代码：手动重新连接（必须保留结构） =================
         self.ui.pushButton_Connect.clicked.connect(self.on_pushButton_Connect_clicked)
         self.ui.pushButton_Disconnect.clicked.connect(self.on_pushButton_Disconnect_clicked)
 
@@ -123,7 +120,6 @@ class MonitorMainWindow(QMainWindow):
         self.ui.pushButton_Send.clicked.connect(self.on_pushButton_Send_clicked)
         self.ui.pushButton_Refresh.clicked.connect(self.on_pushButton_Refresh_clicked)
         self.ui.pushButton_Reset.clicked.connect(self.on_pushButton_Reset_clicked)
-        # =====================================================================
 
         # 初始化UI控件和串口
         self.init_ui_controls()
@@ -133,7 +129,6 @@ class MonitorMainWindow(QMainWindow):
         self.log_message("1. Begin按钮：发送一次左侧设置的参数化命令")
         self.log_message("2. 在下方Debug区域输入Hex字符串，点击Send发送原始数据包")
 
-    # ================= 新增：UI初始化函数 =================
     def init_ui_controls(self):
         """初始化下拉框选项"""
         # ID下拉框（1-8号节点）
@@ -154,7 +149,6 @@ class MonitorMainWindow(QMainWindow):
         # 默认波特率9600
         self.ui.comboBox_BaudRate.setCurrentText("9600")
 
-    # ================= 日志输出函数（统一输出到Log窗口） =================
     def log_message(self, message):
         """带时间戳的日志输出（所有信息统一输出到Log窗口）"""
         timestamp = datetime.datetime.now().strftime("%H:%M:%S.%f")[:-3]
@@ -164,13 +158,11 @@ class MonitorMainWindow(QMainWindow):
             self.ui.plainTextEdit_Log.verticalScrollBar().maximum()
         )
 
-    # ================= 修改：原始数据包信息输出到Log窗口 =================
     def debug_message(self, direction, data):
         """原始Hex数据包信息输出到Log窗口"""
         hex_str = ' '.join([f"{b:02X}" for b in data])
         self.log_message(f"{direction}: {hex_str}")
 
-    # ================= 新增：输入验证函数 =================
     def validate_input(self):
         """验证所有输入参数合法性"""
         if self.ui.comboBox_ID.currentIndex() == -1:
@@ -183,7 +175,7 @@ class MonitorMainWindow(QMainWindow):
             QMessageBox.warning(self, "输入错误", "请选择充退磁模式")
             return False
 
-        # 获取输入值（兼容QPlainTextEdit）
+        # 获取输入值
         current_text = self.ui.plainTextEdit_CURRENT.toPlainText().strip()
         duration_text = self.ui.plainTextEdit_DURATION.toPlainText().strip()
 
@@ -210,7 +202,6 @@ class MonitorMainWindow(QMainWindow):
 
         return True
 
-    # ================= 新增：参数化命令发送函数 =================
     def mag_operate(self, module_id, foot_num, mode, current, pulse_ms):
         """发送标准磁吸附控制命令"""
         if not self.ser.isOpen():
@@ -250,7 +241,6 @@ class MonitorMainWindow(QMainWindow):
             self.log_message(f"发送失败: {str(e)}")
             return False
 
-    # ================= 新增：原始Hex数据包发送函数 =================
     def send_raw_hex_packet(self):
         """从Debug区域读取Hex字符串并发送原始数据包"""
         if not self.ser.isOpen():
@@ -278,7 +268,6 @@ class MonitorMainWindow(QMainWindow):
         except Exception as e:
             self.log_message(f"发送失败: {str(e)}")
 
-    # ================= 新增：串口数据接收与解析函数 =================
     def receive_data(self):
         """定时读取串口数据并解析帧"""
         if not self.ser.isOpen():
@@ -330,7 +319,6 @@ class MonitorMainWindow(QMainWindow):
             else:
                 self.log_message(f"收到未知CAN帧: ID={can_id:04X}, Data={can_data.hex()}")
 
-    # ================= 新增：回执帧解析函数 =================
     def parse_ack_frame(self, module_id, data):
         """解析从机返回的执行状态回执"""
         if len(data) < 5 or data[0] != 0xE0:
@@ -370,7 +358,6 @@ class MonitorMainWindow(QMainWindow):
 
         self.update_plots()
 
-    # ================= 新增：图表更新函数 =================
     def update_plots(self):
         """实时更新状态和电流图表"""
         # 更新状态图
@@ -393,7 +380,6 @@ class MonitorMainWindow(QMainWindow):
             self.ax_current.autoscale_view(scalex=False, scaley=True)
         self.canvas_current.draw()
 
-    # ================= 按钮点击事件（保留原始函数名） =================
     def on_pushButton_Connect_clicked(self):
         """连接串口"""
         self.port_open()
@@ -455,7 +441,6 @@ class MonitorMainWindow(QMainWindow):
 
         self.log_message("系统已重置")
 
-    # ================= 原始串口函数（100%保留未修改） =================
     def port_check(self):
         # 检测所有存在的串口，将信息存储在字典中
         self.Com_Dict = {}  # 创建一个字典，字典是可变的容器
