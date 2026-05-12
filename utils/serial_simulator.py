@@ -31,12 +31,12 @@ class MagFootSlaveSimulator:
                 stopbits=serial.STOPBITS_ONE,
                 timeout=0.1
             )
-            print(f"✅ 虚拟串口 {self.port} 已打开，波特率 {self.baudrate}")
+            print(f" 虚拟串口 {self.port} 已打开，波特率 {self.baudrate}")
             print("=" * 60)
             print("等待接收主机命令...")
             return True
         except Exception as e:
-            print(f"❌ 串口打开失败: {e}")
+            print(f" 串口打开失败: {e}")
             print("请检查：1. 串口号是否正确；2. 串口是否被占用")
             return False
 
@@ -133,7 +133,7 @@ class MagFootSlaveSimulator:
 
                     if start_idx > 0:
                         # 丢弃包首之前的垃圾数据
-                        print(f"⚠️ 丢弃垃圾数据: {self.serial_buffer[:start_idx].hex()}")
+                        print(f" 丢弃垃圾数据: {self.serial_buffer[:start_idx].hex()}")
                         self.serial_buffer = self.serial_buffer[start_idx:]
 
                     # 检查是否有完整的 17 字节
@@ -154,7 +154,7 @@ class MagFootSlaveSimulator:
                         foot_str = "左腿" if foot_num == 1 else "右腿" if foot_num == 2 else "未知"
 
                         print("-" * 60)
-                        print(f"📥 收到主机命令:")
+                        print(f"   收到主机命令:")
                         print(f"   模块ID: {module_id:02X}")
                         print(f"   模式:   {mode} ({mode_str})")
                         print(f"   足号:   {foot_num} ({foot_str})")
@@ -172,17 +172,17 @@ class MagFootSlaveSimulator:
 
                         self.ser.write(ack_frame)
 
-                        print(f"📤 发送从机回执:")
+                        print(f"   发送从机回执:")
                         print(f"   实际电流: {actual_current} A (已模拟误差)")
                         print(f"   原始帧:   {ack_frame.hex()}")
 
                     except ValueError as e:
-                        print(f"❌ 帧解析错误: {e}, 数据: {frame.hex()}")
+                        print(f"  帧解析错误: {e}, 数据: {frame.hex()}")
 
                 time.sleep(0.01)  # 避免CPU占用过高
 
         except KeyboardInterrupt:
-            print("\n🛑 模拟器已停止")
+            print("\n  模拟器已停止")
         finally:
             if self.ser and self.ser.is_open:
                 self.ser.close()
@@ -190,7 +190,7 @@ class MagFootSlaveSimulator:
 
 if __name__ == '__main__':
     print("=" * 60)
-    print("🧲  磁吸附模块 - 从机模拟器 (Magnetic Foot Slave Simulator)")
+    print("   磁吸附模块 - 从机模拟器 (Magnetic Foot Slave Simulator)")
     print("=" * 60)
 
     simulator = MagFootSlaveSimulator(VIRTUAL_SERIAL_PORT, BAUD_RATE)
