@@ -1,7 +1,6 @@
 # 主窗口业务逻辑类
 # Robusr 2026.4.19
-# 2026.5.6 最终版：保留原始断开重连机制，实现Begin图形化控制、Debug原始包发送
-# 2026.5.6 修改：将Debug窗口的TX/RX原始数据包信息转移到Log窗口
+# 2026.5.13 最终优化：移除原始数据包日志，仅保留业务日志
 # -*- coding: utf-8 -*-
 import sys
 import time
@@ -47,11 +46,11 @@ class MonitorMainWindow(QMainWindow):
         self.timer.timeout.connect(self.receive_data)  # 连接数据接收函数
         self.timer1 = QTimer()
 
-
+        # ================= 原始代码：第一次临时连接（必须保留） =================
         self.ui.pushButton_Connect.clicked.connect(self.port_open)
         self.ui.pushButton_Disconnect.clicked.connect(self.port_close)
         self.ui.comboBox_DataPort.currentTextChanged.connect(self.port_imf)
-
+        # =====================================================================
 
         # 图表初始化
         self.figure_state = plt.figure()
@@ -76,6 +75,7 @@ class MonitorMainWindow(QMainWindow):
         self.line_current, = self.ax_current.plot([], [], 'r-', label="Actual Current")
         self.ax_current.legend()
 
+        # ================= 原始代码：断开所有自动连接（必须完整保留） =================
         try:
             self.ui.pushButton_Connect.clicked.disconnect()
         except:
@@ -110,7 +110,9 @@ class MonitorMainWindow(QMainWindow):
             self.ui.pushButton_Reset.clicked.disconnect()
         except:
             pass
+        # =====================================================================
 
+        # ================= 原始代码：手动重新连接（必须保留结构） =================
         self.ui.pushButton_Connect.clicked.connect(self.on_pushButton_Connect_clicked)
         self.ui.pushButton_Disconnect.clicked.connect(self.on_pushButton_Disconnect_clicked)
 
@@ -120,6 +122,7 @@ class MonitorMainWindow(QMainWindow):
         self.ui.pushButton_Send.clicked.connect(self.on_pushButton_Send_clicked)
         self.ui.pushButton_Refresh.clicked.connect(self.on_pushButton_Refresh_clicked)
         self.ui.pushButton_Reset.clicked.connect(self.on_pushButton_Reset_clicked)
+        # =====================================================================
 
         # 初始化UI控件和串口
         self.init_ui_controls()
@@ -129,6 +132,7 @@ class MonitorMainWindow(QMainWindow):
         self.log_message("1. Begin按钮：发送一次左侧设置的参数化命令")
         self.log_message("2. 在下方Debug区域输入Hex字符串，点击Send发送原始数据包")
 
+    # ================= UI初始化函数 =================
     def init_ui_controls(self):
         """初始化下拉框选项"""
         # ID下拉框（1-8号节点）
@@ -146,11 +150,12 @@ class MonitorMainWindow(QMainWindow):
         self.ui.comboBox_MODE.addItem("充磁", 1)
         self.ui.comboBox_MODE.addItem("退磁", 2)
 
-        # 默认波特率9600
-        self.ui.comboBox_BaudRate.setCurrentText("9600")
+        # 默认波特率921600（根据硬件实际波特率修改）
+        self.ui.comboBox_BaudRate.setCurrentText("921600")
 
+    # ================= 日志输出函数（仅业务日志） =================
     def log_message(self, message):
-        """带时间戳的日志输出（所有信息统一输出到Log窗口）"""
+        """带时间戳的业务日志输出（不再包含原始数据包）"""
         timestamp = datetime.datetime.now().strftime("%H:%M:%S.%f")[:-3]
         self.ui.plainTextEdit_Log.appendPlainText(f"[{timestamp}] {message}")
         # 自动滚动到底部
@@ -158,11 +163,7 @@ class MonitorMainWindow(QMainWindow):
             self.ui.plainTextEdit_Log.verticalScrollBar().maximum()
         )
 
-    def debug_message(self, direction, data):
-        """原始Hex数据包信息输出到Log窗口"""
-        hex_str = ' '.join([f"{b:02X}" for b in data])
-        self.log_message(f"{direction}: {hex_str}")
-
+    # ================= 输入验证函数 =================
     def validate_input(self):
         """验证所有输入参数合法性"""
         if self.ui.comboBox_ID.currentIndex() == -1:
@@ -193,40 +194,42 @@ class MonitorMainWindow(QMainWindow):
             QMessageBox.warning(self, "输入错误", "电流和时间必须为整数")
             return False
 
-        if current < 0 or current > 20:
-            QMessageBox.warning(self, "输入错误", "电流值必须在0-20A之间")
+        if current < 0 or current > 30:  # 协议更新：电流范围0-30A
+            QMessageBox.warning(self, "输入错误", "电流值必须在0-30A之间")
             return False
-        if duration < 0 or duration > 30:
-            QMessageBox.warning(self, "输入错误", "脉冲时间必须在0-30ms之间")
+        if duration < 1 or duration > 256:  # 协议更新：时间范围1-256ms
+            QMessageBox.warning(self, "输入错误", "脉冲时间必须在1-256ms之间")
             return False
 
         return True
 
+    # ================= 参数化命令发送函数 =================
     def mag_operate(self, module_id, foot_num, mode, current, pulse_ms):
         """发送标准磁吸附控制命令"""
         if not self.ser.isOpen():
             self.log_message("错误：串口未打开，无法发送命令")
             return False
 
-        # 构造17字节标准数据包（小端CAN ID）
+        # 构造17字节标准数据包（CAN ID 大端模式）
         packet = bytearray()
         packet.append(0xAA)  # 包首
         packet.append(0x00)  # 保留
         packet.append(0x00)  # 保留
         packet.append(0x04)  # 有效数据长度
-        packet.extend(module_id.to_bytes(4, byteorder='little'))  # CAN ID（小端）
-        packet.append(mode)  # 模式：1=充磁，2=退磁
+        packet.extend(module_id.to_bytes(4, byteorder='big'))  # CAN ID（大端）
         packet.append(foot_num)  # 足编号：1=左腿，2=右腿
-        packet.append(current)  # 电流值(A)
-        packet.append(pulse_ms)  # 脉冲时间(ms)
+        packet.append(mode)  # 模式：1=充磁，2=退磁
+        packet.append(current)  # 电流值(A) 0-30A
+        packet.append(pulse_ms)  # 脉冲时间(ms) 1-256ms
         packet.extend([0x00, 0x00, 0x00, 0x00])  # 补位
         packet.append(0x7A)  # 包尾
 
         try:
             self.ser.write(packet)
+            mode_str = "充磁" if mode == 1 else "退磁"
+            foot_str = "左腿" if foot_num == 1 else "右腿"
             self.log_message(
-                f"发送命令: ID={module_id:02X}, 足={foot_num}, 模式={mode}, 电流={current}A, 时间={pulse_ms}ms")
-            self.debug_message("TX", packet)
+                f"发送命令: ID={module_id:02X}, {foot_str}, {mode_str}, 电流={current}A, 时间={pulse_ms}ms")
 
             # 保存发送状态
             self.module_states[module_id] = {
@@ -241,6 +244,7 @@ class MonitorMainWindow(QMainWindow):
             self.log_message(f"发送失败: {str(e)}")
             return False
 
+    # ================= 原始Hex数据包发送函数 =================
     def send_raw_hex_packet(self):
         """从Debug区域读取Hex字符串并发送原始数据包"""
         if not self.ser.isOpen():
@@ -250,24 +254,24 @@ class MonitorMainWindow(QMainWindow):
         hex_text = self.ui.plainTextEdit_Debug.toPlainText().strip()
         if not hex_text:
             QMessageBox.information(self, "提示",
-                                    "请在Debug区域输入十六进制字符串\n例如：AA 00 00 04 01 00 00 00 01 01 14 0A 00 00 00 00 7A")
+                                    "请在Debug区域输入十六进制字符串\n例如：AA 00 00 04 00 00 00 01 01 01 14 64 00 00 00 00 7A")
             return
 
         try:
-            # 移除所有空格和换行
-            hex_clean = re.sub(r'[\s\n]', '', hex_text)
+            # 移除所有非十六进制字符
+            hex_clean = re.sub(r'[^0-9A-Fa-f]', '', hex_text)
             # 转换为字节数组
             packet = bytes.fromhex(hex_clean)
 
             self.ser.write(packet)
             self.log_message(f"发送原始数据包 ({len(packet)} 字节)")
-            self.debug_message("TX", packet)
 
         except ValueError as e:
             QMessageBox.warning(self, "Hex格式错误", f"无法解析输入：{str(e)}\n请确保只包含0-9和A-F字符")
         except Exception as e:
             self.log_message(f"发送失败: {str(e)}")
 
+    # ================= 串口数据接收与解析函数 =================
     def receive_data(self):
         """定时读取串口数据并解析帧"""
         if not self.ser.isOpen():
@@ -301,24 +305,23 @@ class MonitorMainWindow(QMainWindow):
 
             # 验证包尾
             if frame[-1] != 0x7A:
-                self.log_message(f"无效帧（包尾错误）: {frame.hex()}")
+                self.log_message(f"无效帧（包尾错误）")
                 continue
 
-            # 输出到Log窗口
-            self.debug_message("RX", frame)
-
-            # 解析CAN ID（小端模式）
-            can_id = int.from_bytes(frame[4:8], byteorder='little')
+            # 解析CAN ID（大端模式 + 清除扩展帧标志）
+            can_id_raw = int.from_bytes(frame[4:8], byteorder='big')
+            can_id = can_id_raw & 0x1FFFFFFF
             data_len = frame[3]
             can_data = frame[8:8 + data_len]
 
-            # 解析回执帧（ID=0x180+模块ID）
-            if can_id >= 0x180 and can_id <= 0x1FF:
+            # 解析回执帧（ID=0x180 + 节点ID）
+            if 0x180 <= can_id <= 0x1FF:
                 module_id = can_id - 0x180
                 self.parse_ack_frame(module_id, can_data)
             else:
-                self.log_message(f"收到未知CAN帧: ID={can_id:04X}, Data={can_data.hex()}")
+                self.log_message(f"收到未知CAN帧: ID=0x{can_id:08X}")
 
+    # ================= 回执帧解析函数 =================
     def parse_ack_frame(self, module_id, data):
         """解析从机返回的执行状态回执"""
         if len(data) < 5 or data[0] != 0xE0:
@@ -339,9 +342,11 @@ class MonitorMainWindow(QMainWindow):
                 "recv_pulse": recv_pulse
             })
 
+        mode_str = "充磁" if recv_mode == 1 else "退磁"
+        foot_str = "左腿" if recv_foot == 1 else "右腿"
         self.log_message(
-            f"收到回执: ID={module_id:02X}, 实际模式={recv_mode}, "
-            f"实际足={recv_foot}, 实际电流={recv_current}A, 实际时间={recv_pulse}ms"
+            f"收到回执: ID={module_id:02X}, {foot_str}, {mode_str}, "
+            f"实际电流={recv_current}A, 实际时间={recv_pulse}ms"
         )
 
         # 更新图表数据
@@ -358,6 +363,7 @@ class MonitorMainWindow(QMainWindow):
 
         self.update_plots()
 
+    # ================= 图表更新函数 =================
     def update_plots(self):
         """实时更新状态和电流图表"""
         # 更新状态图
@@ -380,6 +386,7 @@ class MonitorMainWindow(QMainWindow):
             self.ax_current.autoscale_view(scalex=False, scaley=True)
         self.canvas_current.draw()
 
+    # ================= 按钮点击事件 =================
     def on_pushButton_Connect_clicked(self):
         """连接串口"""
         self.port_open()
@@ -430,7 +437,7 @@ class MonitorMainWindow(QMainWindow):
         # 清空输入框
         self.ui.plainTextEdit_CURRENT.clear()
         self.ui.plainTextEdit_DURATION.clear()
-        self.ui.plainTextEdit_Debug.clear()  # 保留清空Debug输入框
+        self.ui.plainTextEdit_Debug.clear()
 
         # 清空日志
         self.ui.plainTextEdit_Log.clear()
@@ -441,48 +448,46 @@ class MonitorMainWindow(QMainWindow):
 
         self.log_message("系统已重置")
 
+    # ================= 原始串口函数 =================
     def port_check(self):
         # 检测所有存在的串口，将信息存储在字典中
-        self.Com_Dict = {}  # 创建一个字典，字典是可变的容器
-        port_list = list(serial.tools.list_ports.comports())  # list是序列，一串数据，可以追加数据
-
+        self.Com_Dict = {}
+        port_list = list(serial.tools.list_ports.comports())
         print(f"[Debug] 检测到的串口数量: {len(port_list)}")
-
-        self.ui.comboBox_DataPort.clear()  # s1__box_2为串口选择列表
+        self.ui.comboBox_DataPort.clear()
         for port in port_list:
             self.Com_Dict["%s" % port[0]] = "%s" % port[1]
-            self.ui.comboBox_DataPort.addItem(port[0])  # 将检测到的串口放置到s1__box_2串口选择列表
+            self.ui.comboBox_DataPort.addItem(port[0])
         if len(self.Com_Dict) == 0:
             pass
 
-    # ------------------串口选择下拉框选择com口
     def port_imf(self):
         # 显示选定的串口的详细信息
-        imf_s = self.ui.comboBox_DataPort.currentText()  # 当前显示的com口
+        imf_s = self.ui.comboBox_DataPort.currentText()
         if imf_s != "":
             self.ui.plainTextEdit_Log.setPlainText(self.Com_Dict[self.ui.comboBox_DataPort.currentText()])
 
-    # -------------------打开串口
     def port_open(self):
         self.ser.port = self.ui.comboBox_DataPort.currentText()
-        print(self.ui.comboBox_DataPort.currentText())  # 串口选择框
-        self.ser.baudrate = int(9600)  # 波特率输入框
-        self.ser.bytesize = int(8)  # 数据位输入框
-        self.ser.stopbits = int(1)  # 停止位输入框
-        self.ser.parity = "N"  # 校验位输入框
+        print(self.ui.comboBox_DataPort.currentText())
+        # 从下拉框获取波特率
+        self.ser.baudrate = int(self.ui.comboBox_BaudRate.currentText())
+        self.ser.bytesize = int(8)
+        self.ser.stopbits = int(1)
+        self.ser.parity = "N"
         try:
             self.ser.open()
         except:
             QMessageBox.critical(self, "Port Error", "此串口不能被打开！")
         self.timer.start(5)
-        self.start_time = time.time()  # 记录串口连接时间
-        if self.ser.isOpen():  # 打开串口按下，禁用打开按钮，启用关闭按钮
-            self.ui.pushButton_Connect.setEnabled(False)  # 禁用打开按钮
+        self.start_time = time.time()
+        if self.ser.isOpen():
+            self.ui.pushButton_Connect.setEnabled(False)
             self.ui.plainTextEdit_Log.setPlainText("串口状态（已开启）")
 
     def port_close(self):
-        self.timer.stop()  # 停止计时器
-        self.timer1.stop()  # 停止图形显示计时器
+        self.timer.stop()
+        self.timer1.stop()
         try:
             self.ser.close()
         except:
