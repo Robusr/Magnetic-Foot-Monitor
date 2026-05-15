@@ -187,7 +187,7 @@ class MagFootSlaveSimulator:
             if self.ser and self.ser.is_open:
                 self.ser.close()
 
-
+# 模块启动函数
 if __name__ == '__main__':
     print("=" * 60)
     print("   磁吸附模块 - 从机模拟器 (Magnetic Foot Slave Simulator)")
