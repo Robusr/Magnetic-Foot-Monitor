@@ -1,4 +1,4 @@
-# Magnetic Foot Monitor（离职SKIP）
+# Magnetic Foot Monitor（离职）
 **磁吸附足监控上位机 **
 
 [![Python](https://img.shields.io/badge/Python-3.8+-blue.svg)](https://www.python.org/)
