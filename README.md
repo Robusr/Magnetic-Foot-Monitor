@@ -1,23 +1,23 @@
-# Magnetic Foot Monitor（离职SKIP）
-**磁吸附足监控上位机 **
+# Magnetic Foot Monitor
+**磁吸附足监控上位机**
 
 [![Python](https://img.shields.io/badge/Python-3.8+-blue.svg)](https://www.python.org/)
 [![PyQt5](https://img.shields.io/badge/PyQt5-5.15+-green.svg)](https://pypi.org/project/PyQt5/)
 [![Platform](https://img.shields.io/badge/Platform-Windows-lightgrey.svg)](https://www.microsoft.com/windows)
 
-用于控制和监控磁吸附足模块的上位机软件，支持串口通讯、实时数据可视化、原始数据包调试等功能，为磁吸附足系统设计。
+一款用于控制与监控磁吸附足模块的上位机软件，具备串口通讯、实时数据可视化和原始数据包调试等核心功能，专为磁吸附足电控系统开发。
 
-## ✨ 功能特性
+## 功能特性
 
-- 🎛️ **图形化参数配置**：直观的下拉框和输入框，快速配置模块ID、足编号、充退磁模式、电流和脉冲时间
-- 🔌 **完整串口支持**：自动检测串口，支持多种波特率，完善的异常处理
-- 📊 **实时数据可视化**：动态绘制实际电流和状态曲线，X轴自动滚动
-- 🔧 **专业调试工具**：Debug区域支持直接输入并发送原始十六进制数据包，完整记录收发数据
-- 🛡️ **输入安全验证**：实时过滤非法输入，自动限制电流(0-20A)和时间(0-30ms)范围
-- 📝 **结构化日志系统**：带毫秒级时间戳的日志记录，自动滚动到底部
-- 🤖 **从机模拟器**：提供纯软件从机模拟器，无需硬件即可完成全链路测试
+- **图形化参数配置**：直观的下拉框和输入框，快速配置模块ID、足编号、充退磁模式、电流和脉冲时间
+- **完整串口支持**：自动检测串口，支持多种波特率，完善的异常处理
+- **实时数据可视化**：动态绘制实际电流和状态曲线，X轴自动滚动
+- **专业调试工具**：Debug区域支持直接输入并发送原始十六进制数据包，完整记录收发数据
+- **输入安全验证**：实时过滤非法输入，自动限制电流(0-20A)和时间(0-30ms)范围
+- **结构化日志系统**：带毫秒级时间戳的日志记录，自动滚动到底部
+- **从机模拟器**：提供纯软件从机模拟器，无需硬件即可完成全链路测试
 
-## 🚀 快速开始
+## 快速开始
 
 ### 环境要求
 - Windows 10/11
@@ -38,7 +38,7 @@ pip install -r requirements.txt
 python MonitorAppMain.py
 ```
 
-## 📖 使用说明
+## 使用说明
 
 ### 1. 连接串口
 1. 将CAN转串口模块连接到电脑
@@ -70,32 +70,36 @@ python MonitorAppMain.py
 - **Actual Current**图表：显示实际执行的电流值
 - **Log**区域：显示系统运行日志和命令执行结果
 
-## 📁 项目结构
+## 项目结构
 ```
 Magnetic-Foot-Monitor/
 ├── MonitorAppMain.py              # 程序入口
 ├── MonitorMainWindow.py           # 主窗口业务逻辑
 ├── ui_MonitorAppMainWindow.py     # 编译后的UI文件
 ├── res_rc.py                      # 编译后的资源文件
-├── requirements.txt               # 依赖列表
-├── uic.bat                        # UI文件编译脚本
-├── .gitignore                     # Git忽略文件
-├── README.md                      # 本文件
+├── Monitor.py                     # 打包入口 (PyInstaller)
+├── requirements.txt               # Python 依赖清单
+├── uic.bat                        # UI 文件编译脚本
+├── hammer.ico                     # 应用图标
+├── .gitignore                     # Git 忽略规则
+├── README.md                      # 项目文档
 ├── utils/
-│   ├── serial_simulator.py        # 从机模拟器
-│   ├── serial_util.py             # 串口工具函数
-│   └── framework.py               # 通用框架代码
-└── MonitorQtApp/                  # Qt C++版本（备用）
+│   ├── serial_simulator.py        # 从机串口模拟器
+│   ├── serial_util.py             # 串口检测工具
+│   ├── framework.py               # 框架辅助占位
+│   ├── uni.py                     # Unitree Go2 底层混合控制
+│   └── maginetize.py              # Go2 机器人退磁控制脚本
+└── MonitorQtApp/                  # Qt C++ 备用实现
     ├── images/                    # 图片资源
-    ├── main.cpp                   # C++入口
-    ├── mainwindow.cpp             # C++主窗口
-    ├── mainwindow.h               # C++头文件
-    ├── mainwindow.ui              # Qt UI文件
-    ├── res.qrc                    # Qt资源文件
-    └── MonitorQtApp.pro           # Qt项目文件
+    ├── main.cpp                   # C++ 入口
+    ├── mainwindow.cpp             # C++ 主窗口实现
+    ├── mainwindow.h               # C++ 头文件
+    ├── mainwindow.ui              # Qt Designer UI 布局
+    ├── res.qrc                    # Qt 资源文件
+    └── MonitorQtApp.pro           # Qt 项目文件 (qmake)
 ```
 
-## 📡 通讯协议
+## 通讯协议
 
 ### 串口数据包格式（17字节）
 | 偏移 | 长度 | 名称 | 说明 |
@@ -121,7 +125,7 @@ Magnetic-Foot-Monitor/
 - 数据长度：5字节
 - 数据格式：`[0xE0, mode, foot_num, current_a, pulse_ms]`
 
-## 🤖 从机模拟器使用
+## 从机模拟器使用
 
 ### 准备工作
 1. 安装虚拟串口工具 [com0com](https://github.com/hybridgroup/gobot/releases/download/v1.13.0/com0com-3.0.0.0-signed.zip)
@@ -138,7 +142,7 @@ python serial_simulator.py
 2. 启动上位机，连接另一端（如`COM3`）
 3. 在上位机发送命令，模拟器会自动回复带随机误差的回执数据
 
-## 🤝 贡献指南
+## 贡献指南
 1. Fork 本仓库
 2. 创建你的功能分支 (`git checkout -b feature/AmazingFeature`)
 3. 提交你的更改 (`git commit -m 'Add some AmazingFeature'`)
